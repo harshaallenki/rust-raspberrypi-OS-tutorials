@@ -206,21 +206,21 @@ impl PL011UartInner {
 
     /// Set up baud rate and characteristics.
     ///
-    /// This results in 8N1 and 921_600 baud.
+    /// This results in 8N1 and 115_200 baud.
     ///
     /// The calculation for the BRD is (we set the clock to 48 MHz in config.txt):
-    /// `(48_000_000 / 16) / 921_600 = 3.2552083`.
+    /// `(48_000_000 / 16) / 115_200 = 26.0416667`.
     ///
-    /// This means the integer part is `3` and goes into the `IBRD`.
-    /// The fractional part is `0.2552083`.
+    /// This means the integer part is `26` and goes into the `IBRD`.
+    /// The fractional part is `0.0416667`.
     ///
     /// `FBRD` calculation according to the PL011 Technical Reference Manual:
-    /// `INTEGER((0.2552083 * 64) + 0.5) = 16`.
+    /// `INTEGER((0.0416667 * 64) + 0.5) = 3`.
     ///
-    /// Therefore, the generated baud rate divider is: `3 + 16/64 = 3.25`. Which results in a
-    /// genrated baud rate of `48_000_000 / (16 * 3.25) = 923_077`.
+    /// Therefore, the generated baud rate divider is: `26 + 3/64 = 26.046875`. Which results in a
+    /// genrated baud rate of `48_000_000 / (16 * 26.046875) = 115_176`.
     ///
-    /// Error = `((923_077 - 921_600) / 921_600) * 100 = 0.16%`.
+    /// Error = `((115_200 - 115_176) / 115_200) * 100 = 0.02%`.
     pub fn init(&mut self) {
         // Execution can arrive here while there are still characters queued in the TX FIFO and
         // actively being sent out by the UART hardware. If the UART is turned off in this case,
@@ -245,8 +245,8 @@ impl PL011UartInner {
         // contents of IBRD or FBRD, a LCR_H write must always be performed at the end.
         //
         // Set the baud rate, 8N1 and FIFO enabled.
-        self.registers.IBRD.write(IBRD::BAUD_DIVINT.val(3));
-        self.registers.FBRD.write(FBRD::BAUD_DIVFRAC.val(16));
+        self.registers.IBRD.write(IBRD::BAUD_DIVINT.val(26));
+        self.registers.FBRD.write(FBRD::BAUD_DIVFRAC.val(3));
         self.registers
             .LCR_H
             .write(LCR_H::WLEN::EightBit + LCR_H::FEN::FifosEnabled);
